@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: entropy-backend
+    ports:
+      - "4000:4000"
+    environment:
+      - MONGO_URI=mongodb+srv://admin:yjzlQ9Nh1to1tIsq@cluster0.fxcoggp.mongodb.net/entropy-engine?retryWrites=true&w=majority
+      - PORT=4000
+      # This tells the backend to sign data with this key
+      - PRIVATE_KEY=xavier-secret-eth-key-v1
+    networks:
+      - entropy-net
+
+  frontend:
+    build: ./frontend
+    container_name: entropy-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - entropy-net
+    # The Trap Script runs automatically on start via the Dockerfile ENTRYPOINT
+
+networks:
+  entropy-net:
+    driver: bridge
