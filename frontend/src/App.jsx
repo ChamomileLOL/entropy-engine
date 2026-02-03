@@ -2,6 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import './App.css';
 import { predictNextValue, repairMergedPacket } from './mathUtils';
 
+// --- CONFIGURATION: THE DYNAMIC SWITCH ---
+// If Vercel provides a URL, use it. Otherwise, default to Localhost (Docker).
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+
+// Auto-convert 'http' -> 'ws' and 'https' -> 'wss' for the WebSocket
+const WS_URL = API_URL.replace(/^http/, 'ws');
+
 function App() {
   const [dataPoints, setDataPoints] = useState([]); // Stores objects: { time, price, isRepaired }
   const [status, setStatus] = useState('DISCONNECTED');
@@ -14,21 +21,22 @@ function App() {
   // Sends data to MongoDB via the Backend API
   const saveToBackend = async (packet) => {
     try {
-      await fetch('http://localhost:4000/api/record', {
+      // USES DYNAMIC URL NOW
+      await fetch(`${API_URL}/api/record`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(packet)
       });
-      // Note: We don't log success here to avoid console spam, 
-      // but the backend will log [BLOCKCHAIN] Signed & Saved
+      // Note: We don't log success here to avoid console spam
     } catch (err) {
       console.error("Save Failed (Offline?):", err);
     }
   };
 
   useEffect(() => {
-    // 1. ESTABLISH CONNECTION
-    ws.current = new WebSocket('ws://localhost:4000');
+    // 1. ESTABLISH CONNECTION (Dynamic)
+    console.log(`Attempting connection to: ${WS_URL}`);
+    ws.current = new WebSocket(WS_URL);
 
     ws.current.onopen = () => setStatus('CONNECTED: ENTROPY ENGINE ONLINE');
     
